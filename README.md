@@ -6,7 +6,7 @@ O objetivo do projeto é transformar o processo de formação de preços — que
 
 ---
 
-## 🎯 Objetivo do projeto
+##  Objetivo do projeto
 
 - Identificar custos reais do negócio  
 - Integrar custos diretos e indiretos  
@@ -16,7 +16,7 @@ O objetivo do projeto é transformar o processo de formação de preços — que
 
 ---
 
-## 🔄 Fluxo do sistema
+##  Fluxo do sistema
 
 O usuário percorre as seguintes etapas:
 
@@ -29,7 +29,7 @@ O usuário percorre as seguintes etapas:
 
 ---
 
-## 📦 Como rodar o projeto
+##  Como rodar o projeto
 
 ###  Clonar o repositório, entrar, instalar as dependências e rodar
 
