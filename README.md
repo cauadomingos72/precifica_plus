@@ -27,6 +27,32 @@ O usuário percorre as seguintes etapas:
 
 ---
 
+##  Pré-requisitos
+
+Antes de rodar o projeto, você precisa ter instalado:
+
+- Node.js (versão 18 ou superior)
+- npm (já vem junto com o Node)
+
+###  Instalando o Node.js
+
+1. Acesse o site oficial:  
+   https://nodejs.org
+
+2. Acesse o GetNode e baixe o instalador.
+
+3. Execute o instalador e avance com **Next → Next → Next**.
+
+4. Após instalar, reinicie o computador.
+
+5. Para verificar se instalou, abra o terminal (Git Bash, PowerShell ou Terminal do VSCode) e digite:
+
+```bash
+node -v
+npm -v
+```
+---
+
 ##  Como rodar o projeto
 
 ###  Clonar o repositório, entrar, instalar as dependências e rodar
