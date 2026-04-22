@@ -2,8 +2,6 @@
 
 Aplicação web de **precificação inteligente para micro e pequenas empresas**, desenvolvida com **Next.js + TypeScript**.
 
-O objetivo do projeto é transformar o processo de formação de preços — que normalmente é complexo e pouco estruturado — em um fluxo simples, guiado e baseado em dados.
-
 ---
 
 ##  Objetivo do projeto
