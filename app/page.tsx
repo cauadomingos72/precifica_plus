@@ -4,7 +4,7 @@ import Card from "@/components/Card";
 export default function Home() {
   return (
     <main className="container">
-      <h1 className="title">Precifica+ 💰</h1>
+      <h1 className="title">Precifica+ </h1>
 
       <Card>
         <h2 className="subtitle">Bem-vindo</h2>

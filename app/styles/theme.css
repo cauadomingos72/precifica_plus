@@ -1,0 +1,9 @@
+:root {
+  --primary: #0F2A44;     /* azul escuro da logo */
+  --secondary: #1FAF9A;   /* verde/teal */
+  --accent: #F59E0B;      /* laranja/dourado */
+  --bg: #F5F7FA;          /* fundo claro */
+  --card: #FFFFFF;
+  --text: #1F2937;
+  --text-light: #6B7280;
+}
