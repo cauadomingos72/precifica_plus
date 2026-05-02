@@ -1,82 +1,9 @@
-<<<<<<< HEAD
 @import "./styles/theme.css";
-
-=======
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
-/* RESET */
->>>>>>> f1a44e9 (shadcn init + componentes a usar)
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-body {
-  background: var(--bg);
-  color: var(--text);
-}
-
-/* Container padrão */
-.container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 40px 20px;
-}
-
-/* Títulos */
-h1 {
-  font-size: 40px;
-  margin-bottom: 10px;
-  color: var(--primary);
-}
-
-h2 {
-  margin-bottom: 20px;
-}
-
-/* Botão principal */
-.btn-primary {
-  background: var(--secondary);
-  color: white;
-  border: none;
-  padding: 12px 22px;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-<<<<<<< HEAD
-.btn-primary:hover {
-  opacity: 0.9;
-}
-
-/* Cards */
-.card {
-  background: var(--card);
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-  margin-top: 20px;
-}
-
-/* Inputs */
-input {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #dcdcdc;
-  margin-top: 5px;
-  margin-bottom: 15px;
-=======
-.button:hover {
-  background: #1d4ed8;
-}
 
 @theme inline {
   --font-heading: var(--font-sans);
@@ -200,5 +127,4 @@ input {
   html {
     @apply font-sans;
   }
->>>>>>> f1a44e9 (shadcn init + componentes a usar)
 }
