@@ -3,6 +3,10 @@
 import { useState } from "react"
 import { usePricingStore } from "@/store/pricing.store"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import Card from "@/components/Card"
 
 export default function CustosIndiretos() {
   const addCost = usePricingStore((s) => s.addIndirectCost)
@@ -12,10 +16,7 @@ export default function CustosIndiretos() {
   const [value, setValue] = useState(0)
 
   const add = () => {
-    if (!name || value <= 0) {
-      alert("Preencha nome e valor")
-      return
-    }
+    if (!name || value <= 0) return
 
     addCost({
       id: crypto.randomUUID(),
@@ -25,32 +26,46 @@ export default function CustosIndiretos() {
 
     setName("")
     setValue(0)
-    alert("Custo indireto adicionado!")
   }
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>Custos Indiretos (mensais)</h1>
+    <main className="container mx-auto py-12 px-4 max-w-xl">
+      <Card>
+        <h1 className="text-2xl font-bold text-primary mb-6">Custos Indiretos (mensais)</h1>
 
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Ex: Aluguel"
-      /><br/><br/>
+        <div className="space-y-4 mb-8">
+          <div className="space-y-2">
+            <Label htmlFor="indirect-name">Nome do custo</Label>
+            <Input
+              id="indirect-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Aluguel, Internet"
+            />
+          </div>
 
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => setValue(+e.target.value)}
-        placeholder="Valor mensal"
-      /><br/><br/>
+          <div className="space-y-2">
+            <Label htmlFor="indirect-value">Valor mensal (R$)</Label>
+            <Input
+              id="indirect-value"
+              type="number"
+              value={value || ""}
+              onChange={(e) => setValue(+e.target.value)}
+              placeholder="0,00"
+            />
+          </div>
 
-      <button onClick={add}>Adicionar custo</button>
+          <Button onClick={add} variant="secondary" className="w-full">
+            Adicionar custo indireto
+          </Button>
+        </div>
 
-      <br/><br/>
-      <button onClick={() => router.push("/margem")}>
-        Ir para Margem →
-      </button>
-    </div>
+        <div className="border-t pt-6 flex justify-end">
+          <Button onClick={() => router.push("/margem")} size="lg">
+            Ir para Margem →
+          </Button>
+        </div>
+      </Card>
+    </main>
   )
 }

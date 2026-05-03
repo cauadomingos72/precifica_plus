@@ -1,5 +1,3 @@
-import "./styles/theme.css"
-import "./styles/navbar.css"
 import "./globals.css"
 import Navbar from "@/components/Navbar"
 
@@ -10,7 +8,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-br">
-      <body>
+      <body className="antialiased min-h-screen bg-background">
         <Navbar/>
         {children}
       </body>
