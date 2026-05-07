@@ -1,37 +1,48 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { usePricingStore } from "@/store/pricing.store"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Card from "@/components/Card"
+import { useState } from "react";
+import { useAddIndirectCost, useIndirectCosts } from "@/store/pricing.store";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Card from "@/components/Card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function CustosIndiretos() {
-  const addCost = usePricingStore((s) => s.addIndirectCost)
-  const router = useRouter()
+  const addCost = useAddIndirectCost();
+  const indirectCosts = useIndirectCosts();
+  const router = useRouter();
 
-  const [name, setName] = useState("")
-  const [value, setValue] = useState(0)
+  const [name, setName] = useState("");
+  const [value, setValue] = useState(0);
 
   const add = () => {
-    if (!name || value <= 0) return
+    if (!name || value <= 0) return;
 
     addCost({
       id: crypto.randomUUID(),
       name,
-      monthlyValue: value
-    })
+      monthlyValue: value,
+    });
 
-    setName("")
-    setValue(0)
-  }
+    setName("");
+    setValue(0);
+  };
 
   return (
     <main className="container mx-auto py-12 px-4 max-w-xl">
       <Card>
-        <h1 className="text-2xl font-bold text-primary mb-6">Custos Indiretos (mensais)</h1>
+        <h1 className="text-2xl font-bold text-primary mb-6">
+          Custos Indiretos (mensais)
+        </h1>
 
         <div className="space-y-4 mb-8">
           <div className="space-y-2">
@@ -60,6 +71,30 @@ export default function CustosIndiretos() {
           </Button>
         </div>
 
+        {indirectCosts.length > 0 && (
+          <div className="mb-8">
+            <h3 className="font-semibold mb-2 text-sm text-muted-foreground uppercase tracking-wider">Custos Adicionados</h3>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead className="text-right">Valor Mensal</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {indirectCosts.map((cost) => (
+                    <TableRow key={cost.id}>
+                      <TableCell className="font-medium">{cost.name}</TableCell>
+                      <TableCell className="text-right">R$ {cost.monthlyValue.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+
         <div className="border-t pt-6 flex justify-end">
           <Button onClick={() => router.push("/margem")} size="lg">
             Ir para Margem →
@@ -67,5 +102,6 @@ export default function CustosIndiretos() {
         </div>
       </Card>
     </main>
-  )
+  );
 }
+

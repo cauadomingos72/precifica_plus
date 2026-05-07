@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { usePricingStore } from "@/store/pricing.store"
+import { useSetConfig } from "@/store/pricing.store"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import Card from "@/components/Card"
 
 export default function MargemPage() {
-  const setConfig = usePricingStore((s) => s.setConfig)
+  const setConfig = useSetConfig()
   const router = useRouter()
 
   const [margin, setMargin] = useState(20)

@@ -1,18 +1,18 @@
 "use client"
 
 import { useEffect } from "react"
-import { usePricingStore } from "@/store/pricing.store"
+import { useDirectCosts, useIndirectCosts, useConfig, useResult, useSetResult } from "@/store/pricing.store"
 import { calculatePrice } from "@/services/pricingEngine"
 import Card from "@/components/Card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 
 export default function ResultadoPage() {
-  const directCosts = usePricingStore((s) => s.directCosts)
-  const indirectCosts = usePricingStore((s) => s.indirectCosts)
-  const config = usePricingStore((s) => s.config)
-  const result = usePricingStore((s) => s.result)
-  const setResult = usePricingStore((s) => s.setResult)
+  const directCosts = useDirectCosts()
+  const indirectCosts = useIndirectCosts()
+  const config = useConfig()
+  const result = useResult()
+  const setResult = useSetResult()
 
   useEffect(() => {
     if (!config) return

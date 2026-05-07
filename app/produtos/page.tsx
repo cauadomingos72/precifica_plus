@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
-import { usePricingStore } from "@/store/pricing.store"
+import { useSetProduct } from "@/store/pricing.store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,7 +10,7 @@ import Card from "@/components/Card"
 
 export default function ProdutosPage() {
   const { register, handleSubmit } = useForm()
-  const setProduct = usePricingStore(s => s.setProduct)
+  const setProduct = useSetProduct()
   const router = useRouter()
 
   const onSubmit = (data: any) => {

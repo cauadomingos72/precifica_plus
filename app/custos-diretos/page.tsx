@@ -1,15 +1,24 @@
 "use client"
 
 import { useState } from "react"
-import { usePricingStore } from "@/store/pricing.store"
+import { useAddDirectCost, useDirectCosts } from "@/store/pricing.store"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Card from "@/components/Card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 export default function CustosDiretos() {
-  const addCost = usePricingStore(s => s.addDirectCost)
+  const addCost = useAddDirectCost()
+  const directCosts = useDirectCosts()
   const router = useRouter()
 
   const [name, setName] = useState("")
@@ -57,6 +66,30 @@ export default function CustosDiretos() {
             Adicionar custo
           </Button>
         </div>
+
+        {directCosts.length > 0 && (
+          <div className="mb-8">
+            <h3 className="font-semibold mb-2 text-sm text-muted-foreground uppercase tracking-wider">Custos Adicionados</h3>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead className="text-right">Valor/Un</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {directCosts.map((cost) => (
+                    <TableRow key={cost.id}>
+                      <TableCell className="font-medium">{cost.name}</TableCell>
+                      <TableCell className="text-right">R$ {cost.costPerUnit.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
 
         <div className="border-t pt-6 flex justify-end">
           <Button onClick={()=>router.push("/custos-indiretos")} size="lg">
