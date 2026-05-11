@@ -89,7 +89,7 @@ export default function CustosIndiretos() {
         {/* Formulário de adição */}
         <div className="space-y-4 mb-8">
           <div className="space-y-2">
-            <Label htmlFor="indirect-name">Nome do custo</Label>
+            <Label htmlFor="indirect-name">Categoria de Custo</Label>
             <Input
               id="indirect-name"
               value={name}

@@ -88,7 +88,7 @@ export default function CustosDiretos() {
         {/* Formulário de adição */}
         <div className="space-y-4 mb-8">
           <div className="space-y-2">
-            <Label htmlFor="cost-name">Nome do custo</Label>
+            <Label htmlFor="cost-name">Categoria de Custo</Label>
             <Input
               id="cost-name"
               value={name}
