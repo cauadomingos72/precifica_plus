@@ -47,12 +47,12 @@ export default function ResultadoPage() {
           </div>
 
           <div className="flex justify-between items-center bg-secondary/10 p-4 rounded-lg">
-            <span className="font-medium text-secondary-foreground">Lucro por unidade:</span>
+            <span className="font-medium">Lucro por unidade:</span>
             <span className="text-lg font-bold text-secondary">R$ {result.profitPerUnit.toFixed(2)}</span>
           </div>
 
           <div className="flex justify-between items-center bg-accent/10 p-4 rounded-lg">
-            <span className="font-medium text-accent-foreground">Ponto de equilíbrio:</span>
+            <span className="font-medium">Ponto de equilíbrio:</span>
             <span className="text-lg font-bold text-accent">{result.breakEvenUnits} unidades</span>
           </div>
         </div>
