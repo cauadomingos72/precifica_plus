@@ -15,6 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+// 👇 ADICIONAR estas importações
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { HelpCircle } from "lucide-react"
 
 export default function CustosDiretos() {
   const addCost = useAddDirectCost()
@@ -26,11 +34,7 @@ export default function CustosDiretos() {
 
   const add = () => {
     if (!name || value <= 0) return
-    addCost({
-      id: crypto.randomUUID(),
-      name,
-      costPerUnit: value
-    })
+    addCost({ id: crypto.randomUUID(), name, costPerUnit: value })
     setName("")
     setValue(0)
   }
@@ -38,30 +42,46 @@ export default function CustosDiretos() {
   return (
     <main className="container mx-auto py-12 px-4 max-w-xl">
       <Card>
-        <h1 className="text-2xl font-bold text-primary mb-6">Custos Diretos</h1>
+        {/* 👇 SUBSTITUIR o <h1> simples por este bloco com tooltip */}
+        <div className="flex items-center gap-2 mb-6">
+          <h1 className="text-2xl font-bold text-primary">Custos Diretos</h1>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-5 w-5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>
+                  <strong>Custos Diretos</strong> são gastos ligados diretamente
+                  à produção de cada unidade do produto. Exemplos: matéria-prima,
+                  embalagem e frete por unidade.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        {/* 👆 FIM da alteração — o restante do componente não muda */}
 
         <div className="space-y-4 mb-8">
           <div className="space-y-2">
             <Label htmlFor="cost-name">Nome do custo</Label>
-            <Input 
+            <Input
               id="cost-name"
-              value={name} 
-              onChange={e=>setName(e.target.value)} 
+              value={name}
+              onChange={e => setName(e.target.value)}
               placeholder="Ex: Matéria-prima"
             />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="cost-value">Valor por unidade (R$)</Label>
-            <Input 
+            <Input
               id="cost-value"
-              type="number" 
-              value={value || ""} 
-              onChange={e=>setValue(+e.target.value)} 
+              type="number"
+              value={value || ""}
+              onChange={e => setValue(+e.target.value)}
               placeholder="0,00"
             />
           </div>
-
           <Button onClick={add} variant="secondary" className="w-full">
             Adicionar custo
           </Button>
@@ -69,7 +89,9 @@ export default function CustosDiretos() {
 
         {directCosts.length > 0 && (
           <div className="mb-8">
-            <h3 className="font-semibold mb-2 text-sm text-muted-foreground uppercase tracking-wider">Custos Adicionados</h3>
+            <h3 className="font-semibold mb-2 text-sm text-muted-foreground uppercase tracking-wider">
+              Custos Adicionados
+            </h3>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -92,7 +114,7 @@ export default function CustosDiretos() {
         )}
 
         <div className="border-t pt-6 flex justify-end">
-          <Button onClick={()=>router.push("/custos-indiretos")} size="lg">
+          <Button onClick={() => router.push("/custos-indiretos")} size="lg">
             Próximo Passo →
           </Button>
         </div>
