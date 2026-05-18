@@ -1,15 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   Package,
   DollarSign,
   Percent,
   BarChart3,
   ChevronRight,
+  User,
+  LogOut,
+  LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 const steps = [
   { id: "cadastro", label: "Cadastro", path: "/produtos", icon: Package },
@@ -26,6 +31,45 @@ const steps = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const [user, setUser] = useState<any>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (mounted) setUser(user);
+    }
+
+    loadUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      router.refresh();
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router, supabase]);
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setAccountOpen(false);
+    router.push("/login");
+    router.refresh();
+  };
 
   const currentStepIndex = steps.findIndex(
     (step) =>
@@ -34,6 +78,7 @@ export default function Navbar() {
   );
 
   const isHome = pathname === "/";
+  const isDashboard = pathname === "/dashboard";
 
   return (
     <>
@@ -65,8 +110,8 @@ export default function Navbar() {
               const isActive =
                 pathname === step.path ||
                 (step.altPaths && step.altPaths.includes(pathname));
-              const isPast = currentStepIndex > index;
 
+              const isPast = currentStepIndex > index;
               const isAccessible = isActive || isPast;
 
               return (
@@ -89,6 +134,7 @@ export default function Navbar() {
                         isActive ? "animate-pulse" : "",
                       )}
                     />
+
                     <span
                       className={cn(
                         "hidden",
@@ -107,9 +153,65 @@ export default function Navbar() {
               );
             })}
           </div>
+
+          <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block" />
+
+          {user ? (
+            <div className="flex items-center gap-2 relative">
+              <Link
+                href="/dashboard"
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-medium whitespace-nowrap",
+                  isDashboard
+                    ? "bg-secondary text-white shadow-lg shadow-secondary/20"
+                    : "text-white/80 hover:text-white hover:bg-white/10",
+                )}
+              >
+                <LayoutDashboard className="size-4" />
+                <span className="hidden sm:inline">Dashboard</span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setAccountOpen(!accountOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <User className="size-4" />
+                <span className="hidden sm:inline">Conta</span>
+              </button>
+
+              {accountOpen && (
+                <div className="absolute right-0 top-10 w-44 rounded-xl bg-white shadow-xl border border-black/5 p-2">
+                  <Link
+                    href="/conta"
+                    onClick={() => setAccountOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100"
+                  >
+                    Editar conta
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 text-left"
+                  >
+                    <LogOut className="size-4" />
+                    Sair da conta
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary text-white shadow-lg shadow-secondary/20 text-xs font-medium whitespace-nowrap"
+            >
+              <User className="size-4" />
+              <span>Entrar</span>
+            </Link>
+          )}
         </nav>
       </div>
     </>
   );
 }
-
