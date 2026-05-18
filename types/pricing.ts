@@ -17,10 +17,20 @@ export type IndirectCost = {
   monthlyValue: number
 }
 
+export type TaxRegime = "simples" | "presumido" | "mei" | "outro"  // 👈 novo
+
+// 👇 expandido para suportar regimes tributários
 export type PricingConfig = {
-  taxPercent: number
   marginPercent: number
   monthlyProduction: number
+  taxRegime: TaxRegime
+  // Simples Nacional / MEI / Outro
+  taxPercent?: number
+  // Lucro Presumido — campos separados
+  taxPis?: number
+  taxCofins?: number
+  taxIss?: number
+  taxIcms?: number
 }
 
 export type PricingResult = {

@@ -1,4 +1,4 @@
-/*import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { DirectCost, IndirectCost, PricingConfig, PricingResult, Product } from "@/types/pricing"
 
 export async function saveCalculation(
@@ -33,4 +33,3 @@ export async function saveCalculation(
     result_breakeven_units: result.breakEvenUnits,
   })
 }
-*/
