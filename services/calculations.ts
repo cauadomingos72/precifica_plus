@@ -1,6 +1,19 @@
 import { createClient } from "@/lib/supabase/client"
 import { DirectCost, IndirectCost, PricingConfig, PricingResult, Product } from "@/types/pricing"
 
+export function getEffectiveTaxPercent(config: PricingConfig): number {
+  if (config.taxRegime === "presumido") {
+    return (
+      (config.taxPis ?? 0) +
+      (config.taxCofins ?? 0) +
+      (config.taxIss ?? 0) +
+      (config.taxIcms ?? 0)
+    )
+  }
+
+  return config.taxPercent ?? 0
+}
+
 export async function saveCalculation(
   product: Product,
   directCosts: DirectCost[],
