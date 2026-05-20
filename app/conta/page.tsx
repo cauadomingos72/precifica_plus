@@ -31,6 +31,10 @@ export default function ContaPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
 
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState("")
+  const [deletingAccount, setDeletingAccount] = useState(false)
+
   const [message, setMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -153,6 +157,51 @@ export default function ContaPage() {
     setNewPassword("")
     setConfirmPassword("")
     setMessage("Senha alterada com sucesso.")
+  }
+
+  const deleteAccount = async () => {
+    clearMessages()
+
+    if (deleteConfirmation !== "EXCLUIR MINHA CONTA") {
+      setErrorMessage("Digite a frase de confirmação corretamente.")
+      return
+    }
+
+    setDeletingAccount(true)
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      setErrorMessage("Sessão expirada. Faça login novamente.")
+      setDeletingAccount(false)
+      return
+    }
+
+    const response = await fetch("/api/account/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        confirmation: deleteConfirmation,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      setErrorMessage(data.error ?? "Não foi possível excluir a conta.")
+      setDeletingAccount(false)
+      return
+    }
+
+    await supabase.auth.signOut()
+
+    router.push("/login")
+    router.refresh()
   }
 
   const logout = async () => {
@@ -309,6 +358,72 @@ export default function ContaPage() {
           >
             {changingPassword ? "Alterando..." : "Alterar senha"}
           </Button>
+        </section>
+
+        <Separator className="my-8" />
+
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-destructive">
+              Excluir conta
+            </h2>
+
+            <p className="text-sm text-muted-foreground mt-1">
+              Esta ação é permanente. Ao excluir sua conta, seus dados pessoais,
+              empresa e cálculos salvos serão removidos do sistema.
+            </p>
+          </div>
+
+          {!showDeleteAccount ? (
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteAccount(true)}
+            >
+              Excluir minha conta
+            </Button>
+          ) : (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-4">
+              <div>
+                <p className="font-medium text-destructive">
+                  Tem certeza que deseja excluir sua conta?
+                </p>
+
+                <p className="text-sm text-muted-foreground mt-1">
+                  Para confirmar, digite exatamente:
+                  <strong> EXCLUIR MINHA CONTA</strong>
+                </p>
+              </div>
+
+              <Input
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder="Digite a frase de confirmação"
+              />
+
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setShowDeleteAccount(false)
+                    setDeleteConfirmation("")
+                  }}
+                >
+                  Cancelar
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  onClick={deleteAccount}
+                  disabled={
+                    deletingAccount ||
+                    deleteConfirmation !== "EXCLUIR MINHA CONTA"
+                  }
+                >
+                  {deletingAccount ? "Excluindo..." : "Confirmar exclusão"}
+                </Button>
+              </div>
+            </div>
+          )}
         </section>
 
         <Separator className="my-8" />

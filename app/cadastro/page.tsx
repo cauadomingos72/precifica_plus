@@ -18,15 +18,27 @@ export default function CadastroPage() {
   const [companyName, setCompanyName] = useState("")
   const [segment, setSegment] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const cadastrar = async () => {
     setError(null)
+    setSuccess(null)
 
-    if (!companyName) {
+    const cleanCompanyName = companyName.trim()
+    const cleanSegment = segment.trim()
+    const cleanEmail = email.trim()
+
+    if (!cleanCompanyName) {
       setError("Informe o nome da empresa.")
       return
     }
+
+    if (!cleanEmail) {
+      setError("Informe o e-mail.")
+      return
+    }
+
     if (password.length < 6) {
       setError("A senha deve ter pelo menos 6 caracteres.")
       return
@@ -34,39 +46,67 @@ export default function CadastroPage() {
 
     setLoading(true)
 
-    // 1. Cria o usuário no Supabase Auth
     const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
+      email: cleanEmail,
       password,
+      options: {
+        data: {
+          company_name: cleanCompanyName,
+          segment: cleanSegment,
+        },
+      },
     })
 
-    if (signUpError || !data.user) {
-      setError(signUpError?.message ?? "Erro ao criar conta.")
+    if (signUpError) {
+      setError(signUpError.message)
       setLoading(false)
       return
     }
 
-    // 2. Salva os dados da empresa
-    const { error: companyError } = await supabase.from("companies").insert({
-      user_id: data.user.id,
-      name: companyName,
-      segment,
-    })
-
-    if (companyError) {
-      setError("Conta criada, mas erro ao salvar empresa. Tente novamente.")
+    if (!data.user) {
+      setError("Erro ao criar usuário.")
       setLoading(false)
       return
     }
 
-    router.push("/dashboard")
-    router.refresh()
+    if (data.session) {
+      const { error: companyError } = await supabase
+        .from("companies")
+        .upsert(
+          {
+            user_id: data.user.id,
+            name: cleanCompanyName,
+            segment: cleanSegment || null,
+          },
+          {
+            onConflict: "user_id",
+          }
+        )
+
+      if (companyError) {
+        console.error("Erro ao salvar empresa:", companyError)
+        setError("Conta criada, mas erro ao salvar empresa.")
+        setLoading(false)
+        return
+      }
+
+      router.push("/dashboard")
+      router.refresh()
+      return
+    }
+
+    setSuccess(
+      "Conta criada com sucesso. Verifique seu e-mail para confirmar o cadastro antes de entrar."
+    )
+
+    setLoading(false)
   }
 
   return (
     <main className="container mx-auto py-12 px-4 max-w-sm">
       <Card>
         <h1 className="text-2xl font-bold text-primary mb-2">Criar conta</h1>
+
         <p className="text-sm text-muted-foreground mb-6">
           Já tem conta?{" "}
           <Link href="/login" className="underline hover:text-primary">
@@ -117,9 +157,9 @@ export default function CadastroPage() {
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          {success && <p className="text-sm text-green-600">{success}</p>}
 
           <Button onClick={cadastrar} disabled={loading} className="w-full">
             {loading ? "Criando conta..." : "Criar conta"}
