@@ -278,16 +278,16 @@ export default function MargemPage() {
                 />
                 {regime === "simples" && (
                   <p className="text-xs text-muted-foreground">
-                    Não sabe a alíquota? Consulte o{" "}
-                    
+                    Não sabe a alíquota?{" "}
+                    <a
                       href="https://www8.receita.fazenda.gov.br/SimplesNacional/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline hover:text-primary"
-                    <a>
-                      portal do Simples Nacional
-                    </a>
-                    .
+                    >
+                      Clique aqui
+                    </a>{" "}
+                    para consultar o portal do Simples Nacional.
                   </p>
                 )}
               </div>
