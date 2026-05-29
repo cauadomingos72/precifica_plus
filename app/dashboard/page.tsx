@@ -92,6 +92,17 @@ function isDateInRange(dateValue: string, startDate: string, endDate: string) {
   return true
 }
 
+function formatDateBR(dateValue: string) {
+  if (!dateValue) return "-"
+
+  const date = dateValue.split("T")[0]
+  const [year, month, day] = date.split("-")
+
+  if (!year || !month || !day) return dateValue
+
+  return `${day}/${month}/${year}`
+}
+
 export default function DashboardPage() {
   const supabase = createClient()
   const router = useRouter()
@@ -169,12 +180,6 @@ export default function DashboardPage() {
 
     load()
   }, [router, supabase])
-
-  const logout = async () => {
-    await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
-  }
 
   const regimeLabel: Record<string, string> = {
     simples: "Simples Nacional",
@@ -360,16 +365,12 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={() => router.push("/vendas")} variant="secondary">
+          <Button onClick={() => router.push("/vendas")} variant="ghost">
             Vendas
           </Button>
 
           <Button onClick={() => router.push("/produtos")} variant="secondary">
             + Novo cálculo
-          </Button>
-
-          <Button onClick={logout} variant="ghost" size="sm">
-            Sair
           </Button>
         </div>
       </div>
@@ -725,8 +726,12 @@ export default function DashboardPage() {
                       <TableHead>Produto</TableHead>
                       <TableHead>Regime</TableHead>
                       <TableHead className="text-right">Margem</TableHead>
-                      <TableHead className="text-right">Lucro unitário</TableHead>
-                      <TableHead className="text-right">Preço sugerido</TableHead>
+                      <TableHead className="text-right">
+                        Lucro unitário
+                      </TableHead>
+                      <TableHead className="text-right">
+                        Preço sugerido
+                      </TableHead>
                       <TableHead className="text-right">Data</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -760,9 +765,7 @@ export default function DashboardPage() {
                         </TableCell>
 
                         <TableCell className="text-right text-muted-foreground text-sm">
-                          {new Date(calculation.created_at).toLocaleDateString(
-                            "pt-BR"
-                          )}
+                          {formatDateBR(calculation.created_at)}
                         </TableCell>
                       </TableRow>
                     ))}
