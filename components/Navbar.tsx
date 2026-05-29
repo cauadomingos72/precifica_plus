@@ -75,7 +75,7 @@ export default function Navbar() {
   const currentStepIndex = steps.findIndex(
     (step) =>
       pathname === step.path ||
-      (step.altPaths && step.altPaths.includes(pathname)),
+      (step.altPaths && step.altPaths.includes(pathname))
   );
 
   const isHome = pathname === "/";
@@ -86,145 +86,149 @@ export default function Navbar() {
     <>
       <div className="h-20 sm:h-24 w-full print:hidden" aria-hidden="true" />
 
-      <div className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-fit px-4 print:hidden">
-        <nav className="bg-primary/90 backdrop-blur-md border border-white/10 shadow-2xl rounded-full py-1.5 px-3 sm:px-6 flex items-center gap-2 sm:gap-4 transition-all duration-300">
-          <Link
-            href="/"
-            className={cn(
-              "flex items-center gap-2 p-1.5 rounded-full transition-colors",
-              isHome
-                ? "bg-secondary text-white shadow-lg"
-                : "text-white/60 hover:text-white hover:bg-white/5",
-            )}
-            title="Página Inicial"
-          >
-            <img
-              src="/logo_dark.png"
-              alt="Logo"
-              className="h-12 object-contain"
-            />
-          </Link>
+      <div className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-50 w-full px-3 sm:px-6 print:hidden">
+        <nav className="mx-auto w-full max-w-[1120px] bg-primary/95 backdrop-blur-md border border-white/10 shadow-2xl rounded-full py-2 px-4 sm:px-6 flex items-center justify-between gap-3 transition-all duration-300">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              href="/"
+              className={cn(
+                "flex items-center justify-center rounded-full transition-colors flex-shrink-0",
+                isHome
+                  ? "bg-secondary text-white shadow-lg"
+                  : "text-white/70 hover:text-white hover:bg-white/5"
+              )}
+              title="Página Inicial"
+            >
+              <img
+                src="/logo_dark.png"
+                alt="Precifica+"
+                className="h-10 sm:h-11 w-auto max-w-[145px] object-contain flex-shrink-0"
+              />
+            </Link>
 
-          <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block" />
+            <div className="w-px h-6 bg-white/10 hidden sm:block flex-shrink-0" />
 
-          <div className="flex items-center gap-0.5 sm:gap-1">
-            {steps.map((step, index) => {
-              const isActive =
-                pathname === step.path ||
-                (step.altPaths && step.altPaths.includes(pathname));
+            <div className="hidden sm:flex items-center gap-1 min-w-0">
+              {steps.map((step, index) => {
+                const isActive =
+                  pathname === step.path ||
+                  (step.altPaths && step.altPaths.includes(pathname));
 
-              const isPast = currentStepIndex > index;
-              const isAccessible = isActive || isPast;
+                const isPast = currentStepIndex > index;
+                const isAccessible = isActive || isPast;
 
-              return (
-                <div key={step.id} className="flex items-center">
-                  <Link
-                    href={isAccessible ? step.path : "#"}
-                    className={cn(
-                      "flex items-center gap-2 px-2.5 py-1.5 rounded-full transition-all text-[10px] sm:text-xs font-medium whitespace-nowrap",
-                      isActive
-                        ? "bg-secondary text-white shadow-lg shadow-secondary/20 scale-105"
-                        : isPast
-                          ? "text-white/80 hover:text-white hover:bg-white/10"
-                          : "text-white/30 cursor-not-allowed pointer-events-none",
-                    )}
-                    aria-current={isActive ? "step" : undefined}
-                  >
-                    <step.icon
+                return (
+                  <div key={step.id} className="flex items-center">
+                    <Link
+                      href={isAccessible ? step.path : "#"}
                       className={cn(
-                        "size-3.5 sm:size-4",
-                        isActive ? "animate-pulse" : "",
+                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all text-xs font-medium whitespace-nowrap",
+                        isActive
+                          ? "bg-secondary text-white shadow-lg shadow-secondary/20 scale-105"
+                          : isPast
+                            ? "text-white/80 hover:text-white hover:bg-white/10"
+                            : "text-white/35 cursor-not-allowed pointer-events-none"
                       )}
-                    />
-
-                    <span
-                      className={cn(
-                        "hidden",
-                        isActive ? "inline" : "md:inline",
-                        isHome ? "hidden" : "",
-                      )}
+                      aria-current={isActive ? "step" : undefined}
                     >
-                      {step.label}
-                    </span>
-                  </Link>
+                      <step.icon
+                        className={cn(
+                          "size-4",
+                          isActive ? "animate-pulse" : ""
+                        )}
+                      />
 
-                  {index < steps.length - 1 && (
-                    <ChevronRight className="size-3 text-white/10 mx-0.5" />
-                  )}
-                </div>
-              );
-            })}
+                      <span
+                        className={cn(
+                          "hidden lg:inline",
+                          isActive ? "md:inline" : "",
+                          isHome ? "hidden" : ""
+                        )}
+                      >
+                        {step.label}
+                      </span>
+                    </Link>
+
+                    {index < steps.length - 1 && (
+                      <ChevronRight className="size-3 text-white/10 mx-0.5 hidden md:block" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block" />
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-medium whitespace-nowrap",
+                    isDashboard
+                      ? "bg-secondary text-white shadow-lg shadow-secondary/20"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  <LayoutDashboard className="size-4" />
+                  <span className="hidden md:inline">Dashboard</span>
+                </Link>
 
-          {user ? (
-            <div className="flex items-center gap-2 relative">
-              <Link
-                href="/dashboard"
-                className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-medium whitespace-nowrap",
-                  isDashboard
-                    ? "bg-secondary text-white shadow-lg shadow-secondary/20"
-                    : "text-white/80 hover:text-white hover:bg-white/10",
-                )}
-              >
-                <LayoutDashboard className="size-4" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </Link>
+                <Link
+                  href="/vendas"
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-medium whitespace-nowrap",
+                    isSales
+                      ? "bg-secondary text-white shadow-lg shadow-secondary/20"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  <ShoppingCart className="size-4" />
+                  <span className="hidden md:inline">Vendas</span>
+                </Link>
 
-              <Link
-                href="/vendas"
-                className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-medium whitespace-nowrap",
-                  isSales
-                    ? "bg-secondary text-white shadow-lg shadow-secondary/20"
-                    : "text-white/80 hover:text-white hover:bg-white/10",
-                )}
-              >
-                <ShoppingCart className="size-4" />
-                <span className="hidden sm:inline">Vendas</span>
-              </Link>
-
-              <button
-                type="button"
-                onClick={() => setAccountOpen(!accountOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all"
-              >
-                <User className="size-4" />
-                <span className="hidden sm:inline">Conta</span>
-              </button>
-
-              {accountOpen && (
-                <div className="absolute right-0 top-10 w-44 rounded-xl bg-white shadow-xl border border-black/5 p-2">
-                  <Link
-                    href="/conta"
-                    onClick={() => setAccountOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100"
-                  >
-                    Editar conta
-                  </Link>
-
+                <div className="relative">
                   <button
                     type="button"
-                    onClick={logout}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 text-left"
+                    onClick={() => setAccountOpen(!accountOpen)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all whitespace-nowrap"
                   >
-                    <LogOut className="size-4" />
-                    Sair da conta
+                    <User className="size-4" />
+                    <span className="hidden md:inline">Conta</span>
                   </button>
+
+                  {accountOpen && (
+                    <div className="absolute right-0 top-10 w-44 rounded-xl bg-white shadow-xl border border-black/5 p-2">
+                      <Link
+                        href="/conta"
+                        onClick={() => setAccountOpen(false)}
+                        className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100"
+                      >
+                        Editar conta
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={logout}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 text-left"
+                      >
+                        <LogOut className="size-4" />
+                        Sair da conta
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary text-white shadow-lg shadow-secondary/20 text-xs font-medium whitespace-nowrap"
-            >
-              <User className="size-4" />
-              <span>Entrar</span>
-            </Link>
-          )}
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-white shadow-lg shadow-secondary/20 text-sm font-medium whitespace-nowrap"
+              >
+                <User className="size-4" />
+                <span>Entrar</span>
+              </Link>
+            )}
+          </div>
         </nav>
       </div>
     </>
