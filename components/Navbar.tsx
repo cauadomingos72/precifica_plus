@@ -12,6 +12,7 @@ import {
   User,
   LogOut,
   LayoutDashboard,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -79,6 +80,7 @@ export default function Navbar() {
 
   const isHome = pathname === "/";
   const isDashboard = pathname === "/dashboard";
+  const isSales = pathname === "/vendas";
 
   return (
     <>
@@ -169,6 +171,19 @@ export default function Navbar() {
               >
                 <LayoutDashboard className="size-4" />
                 <span className="hidden sm:inline">Dashboard</span>
+              </Link>
+
+              <Link
+                href="/vendas"
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-medium whitespace-nowrap",
+                  isSales
+                    ? "bg-secondary text-white shadow-lg shadow-secondary/20"
+                    : "text-white/80 hover:text-white hover:bg-white/10",
+                )}
+              >
+                <ShoppingCart className="size-4" />
+                <span className="hidden sm:inline">Vendas</span>
               </Link>
 
               <button
