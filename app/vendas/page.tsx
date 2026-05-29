@@ -61,6 +61,19 @@ type Sale = {
   created_at: string
 }
 
+
+
+function formatDateBR(dateValue: string) {
+  if (!dateValue) return "-"
+
+  const date = dateValue.split("T")[0]
+  const [year, month, day] = date.split("-")
+
+  if (!year || !month || !day) return dateValue
+
+  return `${day}/${month}/${year}`
+}
+
 export default function VendasPage() {
   const supabase = createClient()
   const router = useRouter()
@@ -519,7 +532,7 @@ export default function VendasPage() {
 
                       <p className="text-xs text-muted-foreground mt-1">
                         R$ {Number(calc.result_price ?? 0).toFixed(2)} •{" "}
-                        {new Date(calc.created_at).toLocaleDateString("pt-BR")}
+                        {formatDateBR(calc.created_at)}
                       </p>
                     </button>
 
@@ -803,9 +816,7 @@ export default function VendasPage() {
                                           }
                                         />
                                       ) : (
-                                        new Date(
-                                          sale.sale_date
-                                        ).toLocaleDateString("pt-BR")
+                                        formatDateBR(sale.sale_date)
                                       )}
                                     </TableCell>
 
@@ -976,9 +987,7 @@ export default function VendasPage() {
                                 }
                               />
                             ) : (
-                              new Date(sale.sale_date).toLocaleDateString(
-                                "pt-BR"
-                              )
+                              formatDateBR(sale.sale_date)
                             )}
                           </TableCell>
 
