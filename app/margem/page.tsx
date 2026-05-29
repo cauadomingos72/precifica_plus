@@ -16,7 +16,6 @@ import {
 import { HelpCircle } from "lucide-react"
 import { TaxRegime } from "@/types/pricing"
 
-// Opções de regime com descrição curta para o usuário
 const TAX_REGIMES: { value: TaxRegime; label: string; description: string }[] = [
   {
     value: "simples",
@@ -66,41 +65,87 @@ function LabelWithTooltip({
   )
 }
 
+function toNumber(value: string): number {
+  if (value.trim() === "") return 0
+
+  const parsed = Number(value)
+
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 export default function MargemPage() {
   const setConfig = useSetConfig()
   const router = useRouter()
 
-  const [margin, setMargin] = useState(20)
-  const [production, setProduction] = useState(100)
+  const [margin, setMargin] = useState("20")
+  const [production, setProduction] = useState("100")
   const [regime, setRegime] = useState<TaxRegime>("simples")
 
-  // Simples / MEI / Outro — alíquota única
-  const [taxPercent, setTaxPercent] = useState(6)
+  const [taxPercent, setTaxPercent] = useState("6")
 
-  // Lucro Presumido — campos separados
-  const [taxPis, setTaxPis] = useState(0.65)
-  const [taxCofins, setTaxCofins] = useState(3)
-  const [taxIss, setTaxIss] = useState(0)
-  const [taxIcms, setTaxIcms] = useState(0)
+  const [taxPis, setTaxPis] = useState("0.65")
+  const [taxCofins, setTaxCofins] = useState("3")
+  const [taxIss, setTaxIss] = useState("0")
+  const [taxIcms, setTaxIcms] = useState("0")
 
-  // Total de impostos calculado com base no regime
+  const [errorMessage, setErrorMessage] = useState("")
+
+  const marginNumber = toNumber(margin)
+  const productionNumber = toNumber(production)
+  const taxPercentNumber = toNumber(taxPercent)
+  const taxPisNumber = toNumber(taxPis)
+  const taxCofinsNumber = toNumber(taxCofins)
+  const taxIssNumber = toNumber(taxIss)
+  const taxIcmsNumber = toNumber(taxIcms)
+
   const totalTax =
     regime === "presumido"
-      ? taxPis + taxCofins + taxIss + taxIcms
-      : taxPercent
+      ? taxPisNumber + taxCofinsNumber + taxIssNumber + taxIcmsNumber
+      : taxPercentNumber
 
   const continuar = () => {
-    if (production <= 0) return
+    setErrorMessage("")
+
+    if (margin.trim() === "") {
+      setErrorMessage("Informe a margem de lucro.")
+      return
+    }
+
+    if (production.trim() === "") {
+      setErrorMessage("Informe a produção mensal.")
+      return
+    }
+
+    if (productionNumber <= 0) {
+      setErrorMessage("A produção mensal precisa ser maior que zero.")
+      return
+    }
+
+    if (regime !== "presumido" && taxPercent.trim() === "") {
+      setErrorMessage("Informe o percentual de imposto.")
+      return
+    }
+
+    if (
+      regime === "presumido" &&
+      taxPis.trim() === "" &&
+      taxCofins.trim() === "" &&
+      taxIss.trim() === "" &&
+      taxIcms.trim() === ""
+    ) {
+      setErrorMessage("Informe pelo menos um imposto do Lucro Presumido.")
+      return
+    }
 
     setConfig({
-      marginPercent: margin,
-      monthlyProduction: production,
+      marginPercent: marginNumber,
+      monthlyProduction: productionNumber,
       taxRegime: regime,
-      taxPercent: regime !== "presumido" ? taxPercent : undefined,
-      taxPis: regime === "presumido" ? taxPis : undefined,
-      taxCofins: regime === "presumido" ? taxCofins : undefined,
-      taxIss: regime === "presumido" ? taxIss : undefined,
-      taxIcms: regime === "presumido" ? taxIcms : undefined,
+      taxPercent: regime !== "presumido" ? taxPercentNumber : undefined,
+      taxPis: regime === "presumido" ? taxPisNumber : undefined,
+      taxCofins: regime === "presumido" ? taxCofinsNumber : undefined,
+      taxIss: regime === "presumido" ? taxIssNumber : undefined,
+      taxIcms: regime === "presumido" ? taxIcmsNumber : undefined,
     })
 
     router.push("/resultado")
@@ -114,8 +159,6 @@ export default function MargemPage() {
         </h1>
 
         <div className="space-y-6">
-
-          {/* Margem de lucro */}
           <div className="space-y-2">
             <LabelWithTooltip
               htmlFor="margin"
@@ -125,12 +168,13 @@ export default function MargemPage() {
             <Input
               id="margin"
               type="number"
+              step="0.01"
               value={margin}
-              onChange={(e) => setMargin(+e.target.value)}
+              onChange={(event) => setMargin(event.target.value)}
+              placeholder="Ex: 20"
             />
           </div>
 
-          {/* Produção mensal */}
           <div className="space-y-2">
             <LabelWithTooltip
               htmlFor="production"
@@ -140,49 +184,50 @@ export default function MargemPage() {
             <Input
               id="production"
               type="number"
+              step="1"
               value={production}
-              onChange={(e) => setProduction(+e.target.value)}
+              onChange={(event) => setProduction(event.target.value)}
+              placeholder="Ex: 100"
             />
           </div>
 
-          {/* Regime tributário */}
           <div className="space-y-3">
             <LabelWithTooltip
               htmlFor="regime"
               label="Regime tributário"
               tooltip="Define como sua empresa paga impostos. Se não souber, escolha 'Outro / Não sei' e informe o percentual total."
             />
+
             <div className="grid grid-cols-2 gap-2">
-              {TAX_REGIMES.map((r) => (
+              {TAX_REGIMES.map((taxRegime) => (
                 <button
-                  key={r.value}
+                  key={taxRegime.value}
                   type="button"
-                  onClick={() => setRegime(r.value)}
+                  onClick={() => setRegime(taxRegime.value)}
                   className={`
                     text-left rounded-lg border p-3 transition-colors
-                    ${regime === r.value
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border hover:border-muted-foreground"
+                    ${
+                      regime === taxRegime.value
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border hover:border-muted-foreground"
                     }
                   `}
                 >
-                  <p className="font-semibold text-sm">{r.label}</p>
+                  <p className="font-semibold text-sm">{taxRegime.label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                    {r.description}
+                    {taxRegime.description}
                   </p>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Campos de imposto — variam conforme regime */}
           <div className="space-y-4 rounded-lg border p-4 bg-muted/30">
             <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Impostos
             </p>
 
             {regime === "presumido" ? (
-              // Lucro Presumido — campos separados
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
@@ -196,9 +241,11 @@ export default function MargemPage() {
                       type="number"
                       step="0.01"
                       value={taxPis}
-                      onChange={(e) => setTaxPis(+e.target.value)}
+                      onChange={(event) => setTaxPis(event.target.value)}
+                      placeholder="Ex: 0.65"
                     />
                   </div>
+
                   <div className="space-y-1.5">
                     <LabelWithTooltip
                       htmlFor="cofins"
@@ -210,9 +257,11 @@ export default function MargemPage() {
                       type="number"
                       step="0.01"
                       value={taxCofins}
-                      onChange={(e) => setTaxCofins(+e.target.value)}
+                      onChange={(event) => setTaxCofins(event.target.value)}
+                      placeholder="Ex: 3"
                     />
                   </div>
+
                   <div className="space-y-1.5">
                     <LabelWithTooltip
                       htmlFor="iss"
@@ -224,9 +273,11 @@ export default function MargemPage() {
                       type="number"
                       step="0.01"
                       value={taxIss}
-                      onChange={(e) => setTaxIss(+e.target.value)}
+                      onChange={(event) => setTaxIss(event.target.value)}
+                      placeholder="Ex: 5"
                     />
                   </div>
+
                   <div className="space-y-1.5">
                     <LabelWithTooltip
                       htmlFor="icms"
@@ -238,19 +289,22 @@ export default function MargemPage() {
                       type="number"
                       step="0.01"
                       value={taxIcms}
-                      onChange={(e) => setTaxIcms(+e.target.value)}
+                      onChange={(event) => setTaxIcms(event.target.value)}
+                      placeholder="Ex: 12"
                     />
                   </div>
                 </div>
 
-                {/* Total calculado */}
                 <div className="flex justify-between items-center rounded-md bg-muted px-3 py-2 text-sm">
-                  <span className="text-muted-foreground">Total de impostos</span>
-                  <span className="font-bold text-primary">{totalTax.toFixed(2)}%</span>
+                  <span className="text-muted-foreground">
+                    Total de impostos
+                  </span>
+                  <span className="font-bold text-primary">
+                    {totalTax.toFixed(2)}%
+                  </span>
                 </div>
               </div>
             ) : (
-              // Simples / MEI / Outro — campo único
               <div className="space-y-2">
                 <LabelWithTooltip
                   htmlFor="tax"
@@ -258,15 +312,15 @@ export default function MargemPage() {
                     regime === "simples"
                       ? "Alíquota efetiva do Simples Nacional (%)"
                       : regime === "mei"
-                      ? "Percentual aproximado sobre o faturamento (%)"
-                      : "Total de impostos (%)"
+                        ? "Percentual aproximado sobre o faturamento (%)"
+                        : "Total de impostos (%)"
                   }
                   tooltip={
                     regime === "simples"
                       ? "A alíquota efetiva está no seu PGDAS-D ou no aplicativo do Simples Nacional. Geralmente entre 4% e 19%."
                       : regime === "mei"
-                      ? "O MEI paga um valor fixo (DAS). Se quiser, estime o % sobre seu faturamento médio. Pode deixar 0."
-                      : "Informe o percentual total de impostos que incide sobre suas vendas."
+                        ? "O MEI paga um valor fixo (DAS). Se quiser, estime o % sobre seu faturamento médio. Pode deixar 0."
+                        : "Informe o percentual total de impostos que incide sobre suas vendas."
                   }
                 />
                 <Input
@@ -274,8 +328,10 @@ export default function MargemPage() {
                   type="number"
                   step="0.01"
                   value={taxPercent}
-                  onChange={(e) => setTaxPercent(+e.target.value)}
+                  onChange={(event) => setTaxPercent(event.target.value)}
+                  placeholder="Ex: 6"
                 />
+
                 {regime === "simples" && (
                   <p className="text-xs text-muted-foreground">
                     Não sabe a alíquota?{" "}
@@ -294,14 +350,21 @@ export default function MargemPage() {
             )}
           </div>
 
-          {/* Resumo antes de continuar */}
           <div className="rounded-lg border px-4 py-3 flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">Impacto total no preço</span>
+            <span className="text-muted-foreground">
+              Impacto total no preço
+            </span>
+
             <span className="font-bold text-primary">
-              Margem {margin}% + Impostos {totalTax.toFixed(2)}% ={" "}
-              {(margin + totalTax).toFixed(2)}%
+              Margem {marginNumber.toFixed(2)}% + Impostos{" "}
+              {totalTax.toFixed(2)}% ={" "}
+              {(marginNumber + totalTax).toFixed(2)}%
             </span>
           </div>
+
+          {errorMessage && (
+            <p className="text-sm text-destructive">{errorMessage}</p>
+          )}
 
           <div className="border-t pt-6 flex justify-end">
             <Button onClick={continuar} size="lg">
