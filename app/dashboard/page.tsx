@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import Card from "@/components/Card"
 import {
   Table,
@@ -26,13 +27,25 @@ import {
   YAxis,
 } from "recharts"
 
+type DirectCostSnapshot = {
+  id?: string
+  name?: string
+  costPerUnit?: number
+}
+
+type IndirectCostSnapshot = {
+  id?: string
+  name?: string
+  monthlyValue?: number
+}
+
 type Calculation = {
   id: string
   product_name: string
   product_category: string | null
   product_unit: string | null
-  direct_costs: any[]
-  indirect_costs: any[]
+  direct_costs: DirectCostSnapshot[]
+  indirect_costs: IndirectCostSnapshot[]
   margin_percent: number
   monthly_production: number
   tax_regime: string
@@ -48,14 +61,36 @@ type Calculation = {
   created_at: string
 }
 
+type Sale = {
+  id: string
+  user_id: string
+  calculation_id: string
+  product_name: string
+  quantity: number
+  unit_price: number
+  unit_profit: number
+  sale_date: string
+  created_at: string
+}
+
 export default function DashboardPage() {
   const supabase = createClient()
   const router = useRouter()
 
+  const [userId, setUserId] = useState("")
   const [calculations, setCalculations] = useState<Calculation[]>([])
+  const [sales, setSales] = useState<Sale[]>([])
   const [companyName, setCompanyName] = useState("")
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  const [saleQuantity, setSaleQuantity] = useState("")
+  const [saleDate, setSaleDate] = useState(
+    new Date().toISOString().split("T")[0]
+  )
+  const [savingSale, setSavingSale] = useState(false)
+  const [dashboardMessage, setDashboardMessage] = useState("")
+  const [dashboardError, setDashboardError] = useState("")
 
   useEffect(() => {
     const load = async () => {
@@ -68,50 +103,68 @@ export default function DashboardPage() {
         return
       }
 
-      const [{ data: company }, { data: calcs }] = await Promise.all([
-        supabase
-          .from("companies")
-          .select("name")
-          .eq("user_id", user.id)
-          .single(),
+      setUserId(user.id)
 
-        supabase
-          .from("calculations")
-          .select(
-            `
-            id,
-            product_name,
-            product_category,
-            product_unit,
-            direct_costs,
-            indirect_costs,
-            margin_percent,
-            monthly_production,
-            tax_regime,
-            tax_percent,
-            tax_pis,
-            tax_cofins,
-            tax_iss,
-            tax_icms,
-            result_price,
-            result_unit_cost,
-            result_profit_per_unit,
-            result_breakeven_units,
-            created_at
-            `
-          )
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(50),
-      ])
+      const [{ data: company }, { data: calcs }, { data: salesData }] =
+        await Promise.all([
+          supabase
+            .from("companies")
+            .select("name")
+            .eq("user_id", user.id)
+            .single(),
+
+          supabase
+            .from("calculations")
+            .select(
+              `
+              id,
+              product_name,
+              product_category,
+              product_unit,
+              direct_costs,
+              indirect_costs,
+              margin_percent,
+              monthly_production,
+              tax_regime,
+              tax_percent,
+              tax_pis,
+              tax_cofins,
+              tax_iss,
+              tax_icms,
+              result_price,
+              result_unit_cost,
+              result_profit_per_unit,
+              result_breakeven_units,
+              created_at
+              `
+            )
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(50),
+
+          supabase
+            .from("sales")
+            .select(
+              "id, user_id, calculation_id, product_name, quantity, unit_price, unit_profit, sale_date, created_at"
+            )
+            .eq("user_id", user.id)
+            .order("sale_date", { ascending: false })
+            .limit(100),
+        ])
 
       if (company) setCompanyName(company.name)
 
       if (calcs) {
-        setCalculations(calcs)
-        if (calcs.length > 0) {
-          setSelectedId(calcs[0].id)
+        const formattedCalcs = calcs as Calculation[]
+        setCalculations(formattedCalcs)
+
+        if (formattedCalcs.length > 0) {
+          setSelectedId(formattedCalcs[0].id)
         }
+      }
+
+      if (salesData) {
+        setSales(salesData as Sale[])
       }
 
       setLoading(false)
@@ -186,6 +239,52 @@ export default function DashboardPage() {
     }
   }, [validCalculations])
 
+  const salesSummary = useMemo(() => {
+    const totalRevenue = sales.reduce(
+      (sum, sale) => sum + Number(sale.quantity) * Number(sale.unit_price),
+      0
+    )
+
+    const totalProfit = sales.reduce(
+      (sum, sale) => sum + Number(sale.quantity) * Number(sale.unit_profit),
+      0
+    )
+
+    const totalQuantity = sales.reduce(
+      (sum, sale) => sum + Number(sale.quantity),
+      0
+    )
+
+    const groupedByProduct = sales.reduce<
+      Record<string, { product: string; quantity: number; revenue: number }>
+    >((acc, sale) => {
+      if (!acc[sale.product_name]) {
+        acc[sale.product_name] = {
+          product: sale.product_name,
+          quantity: 0,
+          revenue: 0,
+        }
+      }
+
+      acc[sale.product_name].quantity += Number(sale.quantity)
+      acc[sale.product_name].revenue +=
+        Number(sale.quantity) * Number(sale.unit_price)
+
+      return acc
+    }, {})
+
+    const topProducts = Object.values(groupedByProduct)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 3)
+
+    return {
+      totalRevenue,
+      totalProfit,
+      totalQuantity,
+      topProducts,
+    }
+  }, [sales])
+
   const priceByProductData = useMemo(() => {
     return validCalculations
       .slice(0, 8)
@@ -196,6 +295,14 @@ export default function DashboardPage() {
         profit: Number(c.result_profit_per_unit ?? 0),
       }))
   }, [validCalculations])
+
+  const salesByProductData = useMemo(() => {
+    return salesSummary.topProducts.map((item) => ({
+      product: item.product,
+      quantity: item.quantity,
+      revenue: item.revenue,
+    }))
+  }, [salesSummary])
 
   const regimeData = useMemo(() => {
     const grouped = validCalculations.reduce<Record<string, number>>(
@@ -246,6 +353,123 @@ export default function DashboardPage() {
     ]
   }, [selectedCalculation, directCostsTotal, indirectCostsTotal])
 
+  const selectedProductSales = useMemo(() => {
+    if (!selectedCalculation) return []
+
+    return sales.filter(
+      (sale) => sale.calculation_id === selectedCalculation.id
+    )
+  }, [sales, selectedCalculation])
+
+  const selectedProductSalesSummary = useMemo(() => {
+    const quantity = selectedProductSales.reduce(
+      (sum, sale) => sum + Number(sale.quantity),
+      0
+    )
+
+    const revenue = selectedProductSales.reduce(
+      (sum, sale) => sum + Number(sale.quantity) * Number(sale.unit_price),
+      0
+    )
+
+    const profit = selectedProductSales.reduce(
+      (sum, sale) => sum + Number(sale.quantity) * Number(sale.unit_profit),
+      0
+    )
+
+    return {
+      quantity,
+      revenue,
+      profit,
+    }
+  }, [selectedProductSales])
+
+  const registerSale = async () => {
+    setDashboardMessage("")
+    setDashboardError("")
+
+    if (!selectedCalculation) {
+      setDashboardError("Selecione um produto para registrar a venda.")
+      return
+    }
+
+    const quantity = Number(saleQuantity)
+
+    if (!quantity || quantity <= 0) {
+      setDashboardError("Informe uma quantidade vendida válida.")
+      return
+    }
+
+    setSavingSale(true)
+
+    const payload = {
+      user_id: userId,
+      calculation_id: selectedCalculation.id,
+      product_name: selectedCalculation.product_name,
+      quantity,
+      unit_price: Number(selectedCalculation.result_price ?? 0),
+      unit_profit: Number(selectedCalculation.result_profit_per_unit ?? 0),
+      sale_date: saleDate,
+    }
+
+    const { data, error } = await supabase
+      .from("sales")
+      .insert(payload)
+      .select()
+      .single()
+
+    setSavingSale(false)
+
+    if (error) {
+      console.error(error)
+      setDashboardError("Não foi possível registrar a venda.")
+      return
+    }
+
+    setSales((current) => [data as Sale, ...current])
+    setSaleQuantity("")
+    setDashboardMessage("Venda registrada com sucesso.")
+  }
+
+  const deleteCalculation = async (calculationId: string) => {
+    const confirmDelete = window.confirm(
+      "Tem certeza que deseja excluir este cálculo? As vendas associadas a ele também serão removidas."
+    )
+
+    if (!confirmDelete) return
+
+    setDashboardMessage("")
+    setDashboardError("")
+
+    const { error } = await supabase
+      .from("calculations")
+      .delete()
+      .eq("id", calculationId)
+      .eq("user_id", userId)
+
+    if (error) {
+      console.error(error)
+      setDashboardError("Não foi possível excluir o cálculo.")
+      return
+    }
+
+    const updatedCalculations = calculations.filter(
+      (calc) => calc.id !== calculationId
+    )
+
+    setCalculations(updatedCalculations)
+
+    setSales((current) =>
+      current.filter((sale) => sale.calculation_id !== calculationId)
+    )
+
+    if (selectedId === calculationId) {
+      setSelectedId(updatedCalculations[0]?.id ?? null)
+    }
+
+    setDashboardMessage("Cálculo excluído com sucesso.")
+  }
+
   return (
     <main className="container mx-auto py-12 px-4 max-w-7xl">
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -259,8 +483,8 @@ export default function DashboardPage() {
           )}
 
           <p className="text-sm text-muted-foreground mt-2">
-            Visualize um panorama dos seus cálculos e acompanhe indicadores para
-            tomar decisões de preço com mais segurança.
+            Visualize cálculos, registre vendas diárias e acompanhe indicadores
+            para tomar decisões de preço com mais segurança.
           </p>
         </div>
 
@@ -275,6 +499,18 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {dashboardMessage && (
+        <div className="mb-6 rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700">
+          {dashboardMessage}
+        </div>
+      )}
+
+      {dashboardError && (
+        <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+          {dashboardError}
+        </div>
+      )}
+
       {loading ? (
         <Card>
           <p className="text-muted-foreground text-sm">Carregando...</p>
@@ -287,8 +523,8 @@ export default function DashboardPage() {
             </h2>
 
             <p className="text-muted-foreground mb-6">
-              Faça seu primeiro cálculo para visualizar o overview e os detalhes
-              dos produtos.
+              Faça seu primeiro cálculo para visualizar o overview, registrar
+              vendas e acompanhar os detalhes dos produtos.
             </p>
 
             <Button onClick={() => router.push("/produtos")}>
@@ -330,6 +566,35 @@ export default function DashboardPage() {
             </Card>
           </section>
 
+          <section className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <p className="text-sm text-muted-foreground">
+                Faturamento registrado
+              </p>
+              <h2 className="text-3xl font-bold text-primary mt-2">
+                R$ {salesSummary.totalRevenue.toFixed(2)}
+              </h2>
+            </Card>
+
+            <Card>
+              <p className="text-sm text-muted-foreground">
+                Lucro estimado registrado
+              </p>
+              <h2 className="text-3xl font-bold text-secondary mt-2">
+                R$ {salesSummary.totalProfit.toFixed(2)}
+              </h2>
+            </Card>
+
+            <Card>
+              <p className="text-sm text-muted-foreground">
+                Unidades vendidas
+              </p>
+              <h2 className="text-3xl font-bold text-accent mt-2">
+                {salesSummary.totalQuantity}
+              </h2>
+            </Card>
+          </section>
+
           <section className="grid gap-6 lg:grid-cols-3">
             <Card>
               <h2 className="text-xl font-semibold text-primary mb-2">
@@ -337,7 +602,7 @@ export default function DashboardPage() {
               </h2>
 
               <p className="text-sm text-muted-foreground mb-5">
-                Resumo geral dos cálculos realizados.
+                Resumo geral dos cálculos e vendas registradas.
               </p>
 
               <div className="space-y-4 text-sm">
@@ -364,11 +629,21 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="rounded-lg bg-accent/10 p-4">
-                  <p className="font-medium">Ação sugerida</p>
-                  <p className="text-muted-foreground mt-1">
-                    Revise produtos com lucro unitário baixo e compare o preço
-                    sugerido com o preço praticado no mercado.
-                  </p>
+                  <p className="font-medium">Top produtos vendidos</p>
+
+                  {salesSummary.topProducts.length > 0 ? (
+                    <ol className="text-muted-foreground mt-2 space-y-1 list-decimal list-inside">
+                      {salesSummary.topProducts.map((product) => (
+                        <li key={product.product}>
+                          {product.product} — {product.quantity} un.
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="text-muted-foreground mt-1">
+                      Nenhuma venda registrada ainda.
+                    </p>
+                  )}
                 </div>
               </div>
             </Card>
@@ -402,37 +677,26 @@ export default function DashboardPage() {
 
             <Card>
               <h2 className="text-xl font-semibold text-primary mb-2">
-                Regimes tributários
+                Produtos mais vendidos
               </h2>
 
               <p className="text-sm text-muted-foreground mb-4">
-                Distribuição dos cálculos por regime.
+                Quantidade registrada por produto.
               </p>
 
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={regimeData}
-                      dataKey="value"
-                      nameKey="name"
-                      outerRadius={85}
-                      label
-                    >
-                      {regimeData.map((_, index) => (
-                        <Cell
-                          key={index}
-                          fill={
-                            ["#0F2A44", "#1FAF9A", "#F59E0B", "#94A3B8"][
-                              index % 4
-                            ]
-                          }
-                        />
-                      ))}
-                    </Pie>
-
+                  <BarChart data={salesByProductData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="product" fontSize={12} />
+                    <YAxis fontSize={12} />
                     <Tooltip />
-                  </PieChart>
+                    <Bar
+                      dataKey="quantity"
+                      name="Unidades vendidas"
+                      fill="#F59E0B"
+                    />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </Card>
@@ -445,26 +709,40 @@ export default function DashboardPage() {
               </h2>
 
               <p className="text-sm text-muted-foreground mb-4">
-                Selecione um produto para ver a análise individual.
+                Selecione um produto para ver detalhes, registrar vendas ou
+                excluir o cálculo.
               </p>
 
               <div className="space-y-2">
                 {calculations.map((calc) => (
-                  <button
+                  <div
                     key={calc.id}
-                    onClick={() => setSelectedId(calc.id)}
-                    className={`w-full text-left rounded-lg border px-4 py-3 transition ${
+                    className={`rounded-lg border px-4 py-3 transition ${
                       selectedCalculation?.id === calc.id
                         ? "border-secondary bg-secondary/10"
                         : "border-border bg-white hover:bg-muted/40"
                     }`}
                   >
-                    <p className="font-medium">{calc.product_name}</p>
+                    <button
+                      onClick={() => setSelectedId(calc.id)}
+                      className="w-full text-left"
+                    >
+                      <p className="font-medium">{calc.product_name}</p>
 
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(calc.created_at).toLocaleDateString("pt-BR")}
-                    </p>
-                  </button>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(calc.created_at).toLocaleDateString("pt-BR")}
+                      </p>
+                    </button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-2 text-destructive hover:text-destructive"
+                      onClick={() => deleteCalculation(calc.id)}
+                    >
+                      Excluir cálculo
+                    </Button>
+                  </div>
                 ))}
               </div>
             </Card>
@@ -478,7 +756,7 @@ export default function DashboardPage() {
                     </h2>
 
                     <p className="text-sm text-muted-foreground mt-1">
-                      Detalhamento do último cálculo selecionado.
+                      Detalhamento do cálculo selecionado e registro de vendas.
                     </p>
                   </div>
 
@@ -529,6 +807,82 @@ export default function DashboardPage() {
                         )}{" "}
                         un.
                       </p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-3 mb-6">
+                    <div className="rounded-lg border p-4">
+                      <p className="text-xs text-muted-foreground">
+                        Vendido no período
+                      </p>
+                      <p className="text-xl font-bold">
+                        {selectedProductSalesSummary.quantity} un.
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border p-4">
+                      <p className="text-xs text-muted-foreground">
+                        Faturamento do produto
+                      </p>
+                      <p className="text-xl font-bold text-primary">
+                        R$ {selectedProductSalesSummary.revenue.toFixed(2)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border p-4">
+                      <p className="text-xs text-muted-foreground">
+                        Lucro estimado do produto
+                      </p>
+                      <p className="text-xl font-bold text-secondary">
+                        R$ {selectedProductSalesSummary.profit.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mb-6 rounded-xl border bg-muted/10 p-4 space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-primary">
+                        Registrar venda do dia
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Informe quantas unidades deste produto foram vendidas.
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Quantidade vendida
+                        </label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={saleQuantity}
+                          onChange={(e) => setSaleQuantity(e.target.value)}
+                          placeholder="Ex: 10"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Data da venda
+                        </label>
+                        <Input
+                          type="date"
+                          value={saleDate}
+                          onChange={(e) => setSaleDate(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="flex items-end">
+                        <Button
+                          onClick={registerSale}
+                          disabled={savingSale}
+                          className="w-full"
+                        >
+                          {savingSale ? "Salvando..." : "Registrar venda"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
@@ -679,6 +1033,72 @@ export default function DashboardPage() {
                 </TableBody>
               </Table>
             </div>
+          </Card>
+
+          <Card>
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-primary">
+                Histórico de vendas
+              </h2>
+
+              <p className="text-sm text-muted-foreground">
+                Últimas vendas registradas pelo usuário.
+              </p>
+            </div>
+
+            {sales.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhuma venda registrada ainda.
+              </p>
+            ) : (
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Produto</TableHead>
+                      <TableHead className="text-right">Quantidade</TableHead>
+                      <TableHead className="text-right">Faturamento</TableHead>
+                      <TableHead className="text-right">Lucro estimado</TableHead>
+                      <TableHead className="text-right">Data</TableHead>
+                    </TableRow>
+                  </TableHeader>
+
+                  <TableBody>
+                    {sales.map((sale) => (
+                      <TableRow key={sale.id}>
+                        <TableCell className="font-medium">
+                          {sale.product_name}
+                        </TableCell>
+
+                        <TableCell className="text-right">
+                          {sale.quantity}
+                        </TableCell>
+
+                        <TableCell className="text-right font-semibold text-primary">
+                          R${" "}
+                          {(
+                            Number(sale.quantity) * Number(sale.unit_price)
+                          ).toFixed(2)}
+                        </TableCell>
+
+                        <TableCell className="text-right text-secondary font-semibold">
+                          R${" "}
+                          {(
+                            Number(sale.quantity) * Number(sale.unit_profit)
+                          ).toFixed(2)}
+                        </TableCell>
+
+                        <TableCell className="text-right text-muted-foreground text-sm">
+                          {new Date(sale.sale_date).toLocaleDateString(
+                            "pt-BR"
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </Card>
         </div>
       )}
