@@ -70,7 +70,14 @@ export default function ResultadoPage() {
         indirect_costs: indirectCosts,
 
         margin_percent: config.marginPercent,
+
+        // Produção mensal deste produto específico
         monthly_production: config.monthlyProduction,
+
+        // Produção mensal total da empresa/mix de produtos.
+        // Este campo é usado para ratear custos indiretos como luz, água,
+        // internet, aluguel e outros gastos compartilhados.
+        total_monthly_production: config.totalMonthlyProduction,
 
         tax_regime: config.taxRegime,
         tax_percent: config.taxPercent ?? null,
@@ -143,6 +150,26 @@ export default function ResultadoPage() {
         <Separator className="my-8" />
 
         <div className="space-y-6">
+          {"totalDirectCost" in result && (
+            <div className="flex justify-between items-center bg-muted/30 p-4 rounded-lg">
+              <span className="font-medium">Custos diretos por unidade:</span>
+              <span className="text-lg font-semibold">
+                R$ {result.totalDirectCost.toFixed(2)}
+              </span>
+            </div>
+          )}
+
+          {"indirectCostPerUnit" in result && (
+            <div className="flex justify-between items-center bg-muted/30 p-4 rounded-lg">
+              <span className="font-medium">
+                Custos indiretos rateados por unidade:
+              </span>
+              <span className="text-lg font-semibold">
+                R$ {result.indirectCostPerUnit.toFixed(2)}
+              </span>
+            </div>
+          )}
+
           <div className="flex justify-between items-center bg-muted/30 p-4 rounded-lg">
             <span className="font-medium">Custo total por unidade:</span>
             <span className="text-lg font-semibold">
@@ -165,6 +192,32 @@ export default function ResultadoPage() {
           </div>
         </div>
 
+        <div className="mt-8 rounded-lg border bg-muted/10 p-4 text-sm text-muted-foreground">
+          <p>
+            <strong className="text-primary">Rateio aplicado:</strong> os custos
+            indiretos foram divididos pela produção mensal total da empresa/mix
+            de produtos, não apenas pela produção deste produto.
+          </p>
+
+          {config && (
+            <div className="mt-3 space-y-1">
+              <p>
+                Produção deste produto:{" "}
+                <strong className="text-primary">
+                  {config.monthlyProduction} unidades/mês
+                </strong>
+              </p>
+
+              <p>
+                Produção total da empresa:{" "}
+                <strong className="text-primary">
+                  {config.totalMonthlyProduction} unidades/mês
+                </strong>
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="mt-8">
           {saving && (
             <p className="text-sm text-center text-muted-foreground">
@@ -179,17 +232,12 @@ export default function ResultadoPage() {
           )}
 
           {saveError && (
-            <p className="text-sm text-center text-red-600">
-              {saveError}
-            </p>
+            <p className="text-sm text-center text-red-600">{saveError}</p>
           )}
         </div>
 
         <div className="mt-8 flex gap-3">
-          <Button
-            className="flex-1"
-            onClick={() => router.push("/dashboard")}
-          >
+          <Button className="flex-1" onClick={() => router.push("/dashboard")}>
             Ver dashboard
           </Button>
 
@@ -204,8 +252,9 @@ export default function ResultadoPage() {
 
         <div className="mt-10 p-4 border border-dashed rounded-lg bg-muted/10">
           <p className="text-sm text-center text-muted-foreground italic">
-            * Este cálculo considera todos os custos diretos e a proporção dos
-            custos indiretos com base na sua produção mensal.
+            * Este cálculo considera custos diretos, impostos, margem desejada e
+            o rateio dos custos indiretos com base na produção mensal total da
+            empresa.
           </p>
         </div>
       </Card>

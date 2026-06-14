@@ -51,11 +51,13 @@ function LabelWithTooltip({
   return (
     <div className="flex items-center gap-1.5">
       <Label htmlFor={htmlFor}>{label}</Label>
+
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
           </TooltipTrigger>
+
           <TooltipContent className="max-w-xs">
             <p>{tooltip}</p>
           </TooltipContent>
@@ -78,7 +80,19 @@ export default function MargemPage() {
   const router = useRouter()
 
   const [margin, setMargin] = useState("20")
+
+  /**
+   * Produção deste produto específico.
+   * Exemplo: 100 unidades de pão de mel.
+   */
   const [production, setProduction] = useState("100")
+
+  /**
+   * Produção total do mix da empresa.
+   * Exemplo: 100 pães de mel + 50 bolos + 200 brigadeiros = 350 unidades.
+   */
+  const [totalProduction, setTotalProduction] = useState("100")
+
   const [regime, setRegime] = useState<TaxRegime>("simples")
 
   const [taxPercent, setTaxPercent] = useState("6")
@@ -92,6 +106,8 @@ export default function MargemPage() {
 
   const marginNumber = toNumber(margin)
   const productionNumber = toNumber(production)
+  const totalProductionNumber = toNumber(totalProduction)
+
   const taxPercentNumber = toNumber(taxPercent)
   const taxPisNumber = toNumber(taxPis)
   const taxCofinsNumber = toNumber(taxCofins)
@@ -112,12 +128,29 @@ export default function MargemPage() {
     }
 
     if (production.trim() === "") {
-      setErrorMessage("Informe a produção mensal.")
+      setErrorMessage("Informe a produção mensal deste produto.")
       return
     }
 
     if (productionNumber <= 0) {
-      setErrorMessage("A produção mensal precisa ser maior que zero.")
+      setErrorMessage("A produção mensal deste produto precisa ser maior que zero.")
+      return
+    }
+
+    if (totalProduction.trim() === "") {
+      setErrorMessage("Informe a produção mensal total da empresa.")
+      return
+    }
+
+    if (totalProductionNumber <= 0) {
+      setErrorMessage("A produção mensal total da empresa precisa ser maior que zero.")
+      return
+    }
+
+    if (totalProductionNumber < productionNumber) {
+      setErrorMessage(
+        "A produção mensal total da empresa não pode ser menor que a produção deste produto."
+      )
       return
     }
 
@@ -140,6 +173,7 @@ export default function MargemPage() {
     setConfig({
       marginPercent: marginNumber,
       monthlyProduction: productionNumber,
+      totalMonthlyProduction: totalProductionNumber,
       taxRegime: regime,
       taxPercent: regime !== "presumido" ? taxPercentNumber : undefined,
       taxPis: regime === "presumido" ? taxPisNumber : undefined,
@@ -165,6 +199,7 @@ export default function MargemPage() {
               label="Margem de lucro (%)"
               tooltip="Percentual de lucro desejado sobre o preço final. Ex: 30 significa que 30% do preço é lucro."
             />
+
             <Input
               id="margin"
               type="number"
@@ -178,9 +213,10 @@ export default function MargemPage() {
           <div className="space-y-2">
             <LabelWithTooltip
               htmlFor="production"
-              label="Produção mensal (unidades)"
-              tooltip="Quantas unidades você produz ou vende por mês. Usado para calcular o ponto de equilíbrio."
+              label="Produção mensal deste produto"
+              tooltip="Quantidade mensal estimada apenas para este produto. Ex: 100 unidades de bolo de pote por mês."
             />
+
             <Input
               id="production"
               type="number"
@@ -189,6 +225,29 @@ export default function MargemPage() {
               onChange={(event) => setProduction(event.target.value)}
               placeholder="Ex: 100"
             />
+          </div>
+
+          <div className="space-y-2">
+            <LabelWithTooltip
+              htmlFor="totalProduction"
+              label="Produção mensal total da empresa"
+              tooltip="Soma da produção mensal de todos os produtos vendidos pela empresa. Esse número é usado para ratear luz, água, internet, aluguel e outros custos indiretos."
+            />
+
+            <Input
+              id="totalProduction"
+              type="number"
+              step="1"
+              value={totalProduction}
+              onChange={(event) => setTotalProduction(event.target.value)}
+              placeholder="Ex: 500"
+            />
+
+            <p className="text-xs text-muted-foreground">
+              Exemplo: se você produz 100 bolos, 200 doces e 200 salgados no
+              mês, informe 500. Assim os custos indiretos são divididos pelo mix
+              total, não apenas por um produto.
+            </p>
           </div>
 
           <div className="space-y-3">
@@ -236,6 +295,7 @@ export default function MargemPage() {
                       label="PIS (%)"
                       tooltip="Geralmente 0,65% no regime cumulativo."
                     />
+
                     <Input
                       id="pis"
                       type="number"
@@ -252,6 +312,7 @@ export default function MargemPage() {
                       label="COFINS (%)"
                       tooltip="Geralmente 3% no regime cumulativo."
                     />
+
                     <Input
                       id="cofins"
                       type="number"
@@ -268,6 +329,7 @@ export default function MargemPage() {
                       label="ISS (%) — serviços"
                       tooltip="Imposto sobre serviços. Varia de 2% a 5% conforme o município. Deixe 0 se vende produtos."
                     />
+
                     <Input
                       id="iss"
                       type="number"
@@ -284,6 +346,7 @@ export default function MargemPage() {
                       label="ICMS (%) — produtos"
                       tooltip="Imposto sobre circulação de mercadorias. Varia de 7% a 25% conforme o estado. Deixe 0 se presta serviços."
                     />
+
                     <Input
                       id="icms"
                       type="number"
@@ -299,6 +362,7 @@ export default function MargemPage() {
                   <span className="text-muted-foreground">
                     Total de impostos
                   </span>
+
                   <span className="font-bold text-primary">
                     {totalTax.toFixed(2)}%
                   </span>
@@ -323,6 +387,7 @@ export default function MargemPage() {
                         : "Informe o percentual total de impostos que incide sobre suas vendas."
                   }
                 />
+
                 <Input
                   id="tax"
                   type="number"
@@ -350,16 +415,33 @@ export default function MargemPage() {
             )}
           </div>
 
-          <div className="rounded-lg border px-4 py-3 flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">
-              Impacto total no preço
-            </span>
+          <div className="rounded-lg border px-4 py-3 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">
+                Produção deste produto
+              </span>
+              <span className="font-semibold text-primary">
+                {productionNumber} un.
+              </span>
+            </div>
 
-            <span className="font-bold text-primary">
-              Margem {marginNumber.toFixed(2)}% + Impostos{" "}
-              {totalTax.toFixed(2)}% ={" "}
-              {(marginNumber + totalTax).toFixed(2)}%
-            </span>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">
+                Produção total da empresa
+              </span>
+              <span className="font-semibold text-primary">
+                {totalProductionNumber} un.
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">
+                Margem + impostos
+              </span>
+              <span className="font-bold text-primary">
+                {(marginNumber + totalTax).toFixed(2)}%
+              </span>
+            </div>
           </div>
 
           {errorMessage && (
